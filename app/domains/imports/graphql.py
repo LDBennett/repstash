@@ -1,5 +1,4 @@
 import strawberry
-from typing import Optional
 from app.domains.imports.models import JobStatus
 from arq.connections import create_pool, RedisSettings
 from app.core.config import settings
@@ -25,17 +24,21 @@ async def get_redis_pool():
 @strawberry.type
 class ImportMutation:
     @strawberry.mutation
-    async def import_exercise(self, url: str, user_id: int) -> ImportJobType:
+    async def import_exercise(self, info: strawberry.Info, url: str) -> ImportJobType:
+        user = info.context.get("user")
+        if not user:
+            raise Exception("Unauthorized: valid Clerk token required")
+            
         # Create pending job in db
         async with AsyncSessionLocal() as session:
-            job = ImportJob(status=JobStatus.PENDING, user_id=user_id, source_url=url)
+            job = ImportJob(status=JobStatus.PENDING, user_id=user.id, source_url=url)
             session.add(job)
             await session.commit()
             await session.refresh(job)
             
             # Enqueue task
             redis = await get_redis_pool()
-            await redis.enqueue_job("import_url_task", job.id, url, user_id)
+            await redis.enqueue_job("import_url_task", job.id, url, user.id)
             
             return ImportJobType(
                 id=job.id,

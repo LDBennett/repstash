@@ -14,3 +14,4 @@ python-dotenv>=1.0.1
 yt-dlp
 pytest>=8.0.2
 pytest-asyncio>=0.23.5
+clerk-backend-api>=0.0.1

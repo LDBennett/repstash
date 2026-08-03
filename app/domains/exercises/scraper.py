@@ -1,4 +1,3 @@
-import httpx
 from io import BytesIO
 import logging
 

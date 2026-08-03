@@ -1,13 +1,17 @@
 import strawberry
 from app.domains.imports.graphql import ImportMutation
-from app.domains.exercises.graphql import ExerciseType
-from typing import List
+
+from app.domains.users.graphql import UserType
 
 @strawberry.type
 class Query:
+
     @strawberry.field
-    def hello(self) -> str:
-        return "Welcome to RepStash GraphQL API"
+    def me(self, info: strawberry.Info) -> UserType:
+        user = info.context.get("user")
+        if not user:
+            raise Exception("Unauthorized: You must be logged in")
+        return user
 
 @strawberry.type
 class Mutation(ImportMutation):

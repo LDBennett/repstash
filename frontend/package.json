@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "repstash-frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@apollo/client": "^4.2.9",
-    "@apollo/experimental-nextjs-app-support": "^0.14.5",
+    "@apollo/client-integration-nextjs": "^0.14.5",
     "@clerk/nextjs": "^7.6.4",
     "framer-motion": "^12.43.0",
     "graphql": "^17.0.2",

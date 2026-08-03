@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
 # Import models for SQLAlchemy registry
@@ -7,11 +8,16 @@ import app.domains.exercises.models
 import app.domains.imports.models
 import app.domains.workouts.models
 
-import strawberry
 from strawberry.fastapi import GraphQLRouter
 from app.api.graphql import schema
 
-graphql_app = GraphQLRouter(schema)
+from app.api.dependencies import get_current_user
+from fastapi import Request, Depends
+
+async def get_graphql_context(request: Request, user = Depends(get_current_user)):
+    return {"request": request, "user": user}
+
+graphql_app = GraphQLRouter(schema, context_getter=get_graphql_context)
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -20,6 +26,14 @@ import os
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(graphql_app, prefix="/graphql")

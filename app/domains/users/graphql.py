@@ -1,9 +1,8 @@
 import strawberry
-from typing import Optional
-from app.domains.users.models import UnitPreference
+import enum
 
 @strawberry.enum
-class GQLUnitPreference(strawberry.Enum):
+class GQLUnitPreference(enum.Enum):
     METRIC = "metric"
     IMPERIAL = "imperial"
 

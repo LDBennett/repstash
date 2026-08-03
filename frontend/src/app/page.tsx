@@ -1,11 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { ArrowRight, Link as LinkIcon, Dumbbell, Zap } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
+  const { isSignedIn } = useAuth();
+
   return (
     <div className="flex flex-col min-h-screen bg-surface-background overflow-hidden relative">
       {/* Decorative background glow */}
@@ -17,27 +19,30 @@ export default function Home() {
           <span className="font-bold text-xl tracking-tight">RepStash</span>
         </div>
         <nav className="flex items-center gap-4">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors">
-                Sign In
-              </button>
-            </SignInButton>
-            <SignInButton mode="modal">
-              <button className="text-sm font-semibold bg-surface-card border border-surface-border text-text-primary px-4 py-2 rounded-full hover:border-brand-amber/50 transition-colors">
-                Get Started
-              </button>
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <Link 
-              href="/dashboard"
-              className="text-sm font-semibold bg-brand-amber text-white px-5 py-2 rounded-full hover:bg-brand-hover transition-colors"
-            >
-              Go to Dashboard
-            </Link>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          {!isSignedIn ? (
+            <>
+              <SignInButton mode="modal">
+                <button className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignInButton mode="modal">
+                <button className="text-sm font-semibold bg-surface-card border border-surface-border text-text-primary px-4 py-2 rounded-full hover:border-brand-amber/50 transition-colors">
+                  Get Started
+                </button>
+              </SignInButton>
+            </>
+          ) : (
+            <>
+              <Link 
+                href="/dashboard"
+                className="text-sm font-semibold bg-brand-amber text-white px-5 py-2 rounded-full hover:bg-brand-hover transition-colors"
+              >
+                Go to Dashboard
+              </Link>
+              <UserButton afterSignOutUrl="/" />
+            </>
+          )}
         </nav>
       </header>
 
@@ -77,15 +82,14 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
           className="mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
         >
-          <SignedOut>
+          {!isSignedIn ? (
             <SignInButton mode="modal">
               <button className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-brand-amber hover:bg-brand-hover text-white px-8 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(255,90,0,0.5)]">
                 Start Stashing
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </SignInButton>
-          </SignedOut>
-          <SignedIn>
+          ) : (
             <Link 
               href="/dashboard"
               className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-brand-amber hover:bg-brand-hover text-white px-8 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(255,90,0,0.5)]"
@@ -93,7 +97,7 @@ export default function Home() {
               Open Dashboard
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-          </SignedIn>
+          )}
           
           <div className="w-full sm:w-auto flex items-center gap-2 px-6 py-4 rounded-full bg-surface-card border border-surface-border text-text-muted">
             <LinkIcon className="w-5 h-5" />

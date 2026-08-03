@@ -1,5 +1,5 @@
 import enum
-from typing import List, Optional
+from typing import Optional
 from sqlalchemy import String, Integer, Float, ForeignKey, Enum
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
