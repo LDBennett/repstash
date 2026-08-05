@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { ArrowRight, Link as LinkIcon, Dumbbell, Zap } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/shared/ui/button";
 
 export default function Home() {
   const { isSignedIn } = useAuth();
@@ -22,14 +23,14 @@ export default function Home() {
           {!isSignedIn ? (
             <>
               <SignInButton mode="modal">
-                <button className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors">
+                <Button variant="ghost" size="none" className="text-sm font-medium text-text-muted hover:text-text-primary">
                   Sign In
-                </button>
+                </Button>
               </SignInButton>
               <SignInButton mode="modal">
-                <button className="text-sm font-semibold bg-surface-card border border-surface-border text-text-primary px-4 py-2 rounded-full hover:border-brand-amber/50 transition-colors">
+                <Button variant="outline" size="sm" className="bg-surface-card hover:border-brand-amber/50">
                   Get Started
-                </button>
+                </Button>
               </SignInButton>
             </>
           ) : (
@@ -40,7 +41,7 @@ export default function Home() {
               >
                 Go to Dashboard
               </Link>
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             </>
           )}
         </nav>
@@ -73,7 +74,7 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
           className="mt-6 text-lg sm:text-xl text-text-muted max-w-2xl"
         >
-          RepStash is your personal "Paprika for Exercise Moves". Drop an Instagram Reel, TikTok, or YouTube Short, and our AI instantly extracts the sets, reps, and form into a clean exercise card.
+          RepStash is your personal &quot;Paprika for Exercise Moves&quot;. Drop an Instagram Reel, TikTok, or YouTube Short, and our AI instantly extracts the sets, reps, and form into a clean exercise card.
         </motion.p>
 
         <motion.div 
@@ -84,10 +85,10 @@ export default function Home() {
         >
           {!isSignedIn ? (
             <SignInButton mode="modal">
-              <button className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-brand-amber hover:bg-brand-hover text-white px-8 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(255,90,0,0.5)]">
+              <Button variant="primary" size="xl" className="w-full sm:w-auto group hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(255,90,0,0.5)]">
                 Start Stashing
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Button>
             </SignInButton>
           ) : (
             <Link 

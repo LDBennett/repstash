@@ -9,7 +9,7 @@ export function Header() {
         <Dumbbell className="w-7 h-7 text-brand-amber" />
         <span className="font-bold text-2xl tracking-tight">RepStash</span>
       </Link>
-      <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-10 h-10" } }} />
+      <UserButton appearance={{ elements: { avatarBox: "w-10 h-10" } }} />
     </header>
   );
 }

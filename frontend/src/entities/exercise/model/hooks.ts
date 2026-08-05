@@ -1,12 +1,17 @@
 import { useState, useMemo } from "react";
 import { getDomainFromUrl } from "@/shared/lib/url";
+import { ExerciseItem, ExerciseMuscle } from "./types";
 
 export type SortConfig = {
   key: string;
   direction: "asc" | "desc";
 };
 
-export function useFilteredExercises(exercisesData: any) {
+export interface ExercisesData {
+  myExercises: ExerciseItem[];
+}
+
+export function useFilteredExercises(exercisesData: ExercisesData | undefined) {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: "createdAt", direction: "desc" });
   const [filterMuscle, setFilterMuscle] = useState("ALL");
   const [filterEquipment, setFilterEquipment] = useState("ALL");
@@ -27,7 +32,7 @@ export function useFilteredExercises(exercisesData: any) {
 
     // Filters
     if (filterMuscle !== "ALL") {
-      result = result.filter(ex => ex.muscles.some((m: any) => m.muscle === filterMuscle));
+      result = result.filter(ex => ex.muscles.some((m: ExerciseMuscle) => m.muscle === filterMuscle));
     }
     if (filterEquipment !== "ALL") {
       result = result.filter(ex => (ex.equipment || "BODYWEIGHT") === filterEquipment);
@@ -44,8 +49,8 @@ export function useFilteredExercises(exercisesData: any) {
         valA = getDomainFromUrl(a.sourceUrl);
         valB = getDomainFromUrl(b.sourceUrl);
       } else {
-        valA = a[sortConfig.key];
-        valB = b[sortConfig.key];
+        valA = (a as unknown as Record<string, unknown>)[sortConfig.key];
+        valB = (b as unknown as Record<string, unknown>)[sortConfig.key];
       }
       
       if (valA == null) valA = "";

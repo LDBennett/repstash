@@ -1,6 +1,9 @@
-import { gql } from "@apollo/client";
+import { gql, TypedDocumentNode } from "@apollo/client";
+import { ExerciseDetail, ExerciseItem } from "../model/types";
 
-export const GET_MY_EXERCISES = gql`
+export const GET_MY_EXERCISES: TypedDocumentNode<{
+  myExercises: ExerciseItem[];
+}> = gql`
   query GetMyExercises {
     myExercises {
       id
@@ -18,7 +21,10 @@ export const GET_MY_EXERCISES = gql`
   }
 `;
 
-export const IMPORT_EXERCISE = gql`
+export const IMPORT_EXERCISE: TypedDocumentNode<
+  { importExercise: { id: number; status: string } },
+  { url: string }
+> = gql`
   mutation ImportExercise($url: String!) {
     importExercise(url: $url) {
       id
@@ -27,7 +33,10 @@ export const IMPORT_EXERCISE = gql`
   }
 `;
 
-export const GET_IMPORT_JOB = gql`
+export const GET_IMPORT_JOB: TypedDocumentNode<
+  { importJob: { id: number; status: string } },
+  { id: number }
+> = gql`
   query GetImportJob($id: Int!) {
     importJob(id: $id) {
       id
@@ -36,7 +45,10 @@ export const GET_IMPORT_JOB = gql`
   }
 `;
 
-export const GET_EXERCISE = gql`
+export const GET_EXERCISE: TypedDocumentNode<
+  { exercise: ExerciseDetail },
+  { id: number }
+> = gql`
   query GetExercise($id: Int!) {
     exercise(id: $id) {
       id
@@ -55,7 +67,7 @@ export const GET_EXERCISE = gql`
   }
 `;
 
-export const GET_ME = gql`
+export const GET_ME: TypedDocumentNode<{ me: { id: number } | null }> = gql`
   query GetMe {
     me {
       id
@@ -63,7 +75,10 @@ export const GET_ME = gql`
   }
 `;
 
-export const UPDATE_EXERCISE = gql`
+export const UPDATE_EXERCISE: TypedDocumentNode<
+  { updateExercise: { id: number; description: string; steps: string[] } },
+  { id: number; description?: string; steps?: string[] }
+> = gql`
   mutation UpdateExercise($id: Int!, $description: String, $steps: [String!]) {
     updateExercise(id: $id, description: $description, steps: $steps) {
       id

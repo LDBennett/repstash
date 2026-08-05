@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Loader2, Play, Filter, ArrowUpDown, Link as LinkIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GET_MY_EXERCISES } from "@/entities/exercise";
-import { useFilteredExercises } from "@/entities/exercise";
+import { useFilteredExercises, ExerciseItem, ExerciseMuscle } from "@/entities/exercise";
 import { DropdownFilter } from "@/shared/ui/dropdown-filter";
 import { getDomainFromUrl } from "@/shared/lib/url";
 import { ImportExerciseForm } from "@/features/import-exercise";
@@ -112,7 +112,7 @@ export function DashboardStashWidget() {
                       </td>
                     </tr>
                   ) : (
-                    processedExercises.map((ex: any) => (
+                    processedExercises.map((ex: ExerciseItem) => (
                       <tr 
                         key={ex.id} 
                         onClick={() => router.push(`/exercises/${ex.id}`)}
@@ -121,7 +121,7 @@ export function DashboardStashWidget() {
                         <td className="px-6 py-5">
                            <div className="font-bold text-base mb-1.5 group-hover:text-brand-amber transition-colors">{ex.title}</div>
                            <div className="flex flex-wrap gap-1.5">
-                             {ex.muscles?.map((m: any, i: number) => (
+                             {ex.muscles?.map((m: ExerciseMuscle, i: number) => (
                                 <span key={i} className="text-[10px] font-semibold text-brand-amber bg-brand-amber/10 px-2 py-0.5 rounded uppercase tracking-wider">
                                   {m.muscle}
                                 </span>

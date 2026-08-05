@@ -6,7 +6,7 @@ export const getDomainFromUrl = (url: string | null) => {
     if (hostname.includes("tiktok.com")) return "TikTok";
     if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) return "YouTube";
     return "Other";
-  } catch (e) {
+  } catch {
     return "Other";
   }
 };

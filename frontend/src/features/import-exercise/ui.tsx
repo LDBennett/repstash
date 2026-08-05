@@ -3,16 +3,26 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { motion } from "framer-motion";
-import { Plus, Link as LinkIcon, Loader2 } from "lucide-react";
+import { PlusIcon, LinkIcon, Loader2 } from "lucide-react";
 import { IMPORT_EXERCISE, GET_IMPORT_JOB } from "@/entities/exercise";
+import { Button } from "@/shared/ui/button";
 
-export function ImportExerciseForm({ onImportSuccess }: { onImportSuccess: () => void }) {
+export function ImportExerciseForm({
+  onImportSuccess,
+}: {
+  onImportSuccess: () => void;
+}) {
   const [url, setUrl] = useState("");
   const [activeJobId, setActiveJobId] = useState<number | null>(null);
 
-  const [importExerciseMutation, { loading: importLoading }] = useMutation(IMPORT_EXERCISE);
-  
-  const { data: jobData, startPolling, stopPolling } = useQuery(GET_IMPORT_JOB, {
+  const [importExerciseMutation, { loading: importLoading }] =
+    useMutation(IMPORT_EXERCISE);
+
+  const {
+    data: jobData,
+    startPolling,
+    stopPolling,
+  } = useQuery(GET_IMPORT_JOB, {
     variables: { id: activeJobId as number },
     skip: activeJobId === null,
   });
@@ -22,6 +32,7 @@ export function ImportExerciseForm({ onImportSuccess }: { onImportSuccess: () =>
       const status = jobData.importJob.status;
       if (status === "COMPLETED") {
         stopPolling();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveJobId(null);
         setUrl("");
         onImportSuccess();
@@ -51,11 +62,11 @@ export function ImportExerciseForm({ onImportSuccess }: { onImportSuccess: () =>
   const isExtracting = importLoading || activeJobId !== null;
 
   return (
-    <motion.form 
+    <motion.form
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      onSubmit={handleImport} 
+      onSubmit={handleImport}
       className="relative max-w-3xl w-full mx-auto mb-16 z-10"
     >
       <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
@@ -71,17 +82,22 @@ export function ImportExerciseForm({ onImportSuccess }: { onImportSuccess: () =>
         required
       />
       <div className="absolute inset-y-2 right-2 flex items-center">
-        <button
+        <Button
           type="submit"
           disabled={isExtracting || !url}
-          className="bg-brand-amber hover:bg-brand-hover text-white px-6 py-3 rounded-full font-semibold transition-all disabled:opacity-50 disabled:hover:bg-brand-amber flex items-center gap-2"
+          variant="primary"
+          size="lg"
         >
           {isExtracting ? (
-            <><Loader2 className="w-5 h-5 animate-spin" /> Extracting</>
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" /> Extracting
+            </>
           ) : (
-            <><Plus className="w-5 h-5" /> Stash It</>
+            <>
+              <PlusIcon className="w-5 h-5" /> Stash It
+            </>
           )}
-        </button>
+        </Button>
       </div>
     </motion.form>
   );
