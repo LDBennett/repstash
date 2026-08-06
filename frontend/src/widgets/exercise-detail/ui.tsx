@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { motion } from "framer-motion";
 import {
@@ -11,17 +11,20 @@ import {
   X,
   ShieldAlert,
   PlusIcon,
+  Trash2,
 } from "lucide-react";
-import { GET_EXERCISE, GET_ME, UPDATE_EXERCISE } from "@/entities/exercise";
-import { useRouter } from "next/navigation";
+import { GET_EXERCISE, GET_ME, UPDATE_EXERCISE, DELETE_EXERCISE } from "@/entities/exercise";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/shared/ui/button";
 import { ExerciseSteps } from "./exercise-steps";
 
 export function ExerciseDetailWidget({ id }: { id: number }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isEditing, setIsEditing] = useState(false);
   const [editDesc, setEditDesc] = useState("");
   const [editSteps, setEditSteps] = useState<string[]>([]);
+  const autoEditTriggered = useRef(false);
 
   const {
     data: exerciseData,
@@ -34,9 +37,38 @@ export function ExerciseDetailWidget({ id }: { id: number }) {
   const { data: meData } = useQuery(GET_ME, { errorPolicy: "ignore" });
 
   const [updateExercise, { loading: updating }] = useMutation(UPDATE_EXERCISE);
+  const [deleteExercise, { loading: deleting }] = useMutation(DELETE_EXERCISE, {
+    update(cache) {
+      cache.evict({ id: cache.identify({ __typename: "ExerciseType", id }) });
+      cache.gc();
+    }
+  });
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this exercise?")) return;
+    try {
+      await deleteExercise({ variables: { id } });
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Failed to delete", err);
+      alert("Failed to delete exercise.");
+    }
+  };
 
   const exercise = exerciseData?.exercise;
   const isOwner = meData?.me?.id === exercise?.userId;
+
+  // Land straight in edit mode right after an import (?edit=true), so the
+  // user can review/fix the AI-generated instructions before keeping it.
+  useEffect(() => {
+    if (autoEditTriggered.current || !exercise || !isOwner) return;
+    if (searchParams.get("edit") !== "true") return;
+
+    autoEditTriggered.current = true;
+    setIsEditing(true);
+    setEditDesc(exercise.description || "");
+    setEditSteps([...(exercise.steps || [])]);
+  }, [exercise, isOwner, searchParams]);
 
   const handleSave = async () => {
     try {
@@ -103,7 +135,7 @@ export function ExerciseDetailWidget({ id }: { id: number }) {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-4xl mx-auto bg-surface-card border border-surface-border rounded-3xl p-8 md:p-12 shadow-2xl relative z-10"
     >
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 border-b border-surface-border pb-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8 border-b border-surface-border pb-8">
         <div>
           <div className="flex flex-wrap gap-2 mb-4">
             <span className="text-xs font-bold px-3 py-1 bg-surface-background border border-surface-border rounded-full text-text-muted uppercase tracking-wider">
@@ -118,7 +150,19 @@ export function ExerciseDetailWidget({ id }: { id: number }) {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto shrink-0">
+          {isOwner && (
+            <Button
+              onClick={handleDelete}
+              disabled={deleting}
+              variant="outline"
+              size="md"
+              className="whitespace-nowrap flex-1 sm:flex-none text-red-500 hover:bg-red-500/10 hover:text-red-600 border-red-500/30 transition-colors"
+              title="Delete Exercise"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : <Trash2 className="w-4 h-4 shrink-0" />}
+            </Button>
+          )}
           {!isEditing && isOwner && (
             <Button
               onClick={() => {
@@ -128,8 +172,9 @@ export function ExerciseDetailWidget({ id }: { id: number }) {
               }}
               variant="outline"
               size="md"
+              className="whitespace-nowrap flex-1 sm:flex-none"
             >
-              <Edit2 className="w-4 h-4" /> Edit
+              <Edit2 className="w-4 h-4 shrink-0" /> Edit
             </Button>
           )}
           {exercise.sourceUrl && (
@@ -137,9 +182,9 @@ export function ExerciseDetailWidget({ id }: { id: number }) {
               href={exercise.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-brand-amber text-white font-semibold hover:bg-brand-hover transition-colors shadow-lg shadow-brand-amber/20"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-brand-amber text-white font-semibold hover:bg-brand-hover transition-colors shadow-lg shadow-brand-amber/20 whitespace-nowrap flex-1 sm:flex-none"
             >
-              <LinkIcon className="w-4 h-4" /> Watch Video
+              <LinkIcon className="w-4 h-4 shrink-0" /> Watch Video
             </a>
           )}
         </div>
@@ -184,6 +229,15 @@ export function ExerciseDetailWidget({ id }: { id: number }) {
 
         {/* Sidebar Area */}
         <div className="space-y-8">
+          {exercise.thumbnailUrl && (
+            <div className="bg-surface-background border border-surface-border rounded-2xl overflow-hidden aspect-video relative shadow-md">
+              <img 
+                src={`/api/proxy?url=${encodeURIComponent(exercise.thumbnailUrl)}`} 
+                alt={exercise.title} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+          )}
           <div className="bg-surface-background border border-surface-border rounded-2xl p-6">
             <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-4">
               Target Muscles
@@ -205,29 +259,29 @@ export function ExerciseDetailWidget({ id }: { id: number }) {
           </div>
 
           {isEditing && (
-            <div className="bg-surface-background border border-surface-border rounded-2xl p-6 flex flex-col gap-3">
-              <Button
-                onClick={handleSave}
-                disabled={updating}
-                variant="success"
-                size="md"
-                fullWidth
-              >
-                {updating ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Check className="w-5 h-5" />
-                )}{" "}
-                Save Changes
-              </Button>
+            <div className="bg-surface-background border border-surface-border rounded-2xl p-6 flex gap-3">
               <Button
                 onClick={() => setIsEditing(false)}
                 disabled={updating}
                 variant="secondary"
                 size="md"
-                fullWidth
+                className="flex-1"
               >
                 Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={updating}
+                variant="success"
+                size="md"
+                className="flex-1"
+              >
+                {updating ? (
+                  <Loader2 className="w-5 h-5 shrink-0 animate-spin" />
+                ) : (
+                  <Check className="w-5 h-5 shrink-0" />
+                )}{" "}
+                Save
               </Button>
             </div>
           )}

@@ -4,7 +4,6 @@ import pytest
 
 import app.domains.imports.graphql as graphql_module
 from app.domains.imports.models import JobStatus
-from tests.conftest import FakeAsyncSessionCM as _FakeSessionCM
 
 
 async def test_import_exercise_creates_job_and_enqueues_task(mock_session):
@@ -19,12 +18,9 @@ async def test_import_exercise_creates_job_and_enqueues_task(mock_session):
         id = 7
 
     mock_info = MagicMock()
-    mock_info.context = {"user": MockUser()}
+    mock_info.context = {"user": MockUser(), "session": mock_session}
 
-    with (
-        patch("app.domains.imports.graphql.AsyncSessionLocal", lambda: _FakeSessionCM(mock_session)),
-        patch("app.domains.imports.graphql.get_redis_pool", AsyncMock(return_value=mock_redis)),
-    ):
+    with patch("app.domains.imports.graphql.get_redis_pool", AsyncMock(return_value=mock_redis)):
         mutation = graphql_module.ImportMutation()
         result = await mutation.import_exercise(info=mock_info, url="https://example.com/reel")
 
@@ -42,14 +38,11 @@ async def test_import_exercise_creates_job_and_enqueues_task(mock_session):
 
 async def test_import_exercise_rejects_missing_user(mock_session):
     mock_info = MagicMock()
-    mock_info.context = {"user": None}
+    mock_info.context = {"user": None, "session": mock_session}
 
-    with (
-        patch("app.domains.imports.graphql.AsyncSessionLocal", lambda: _FakeSessionCM(mock_session)),
-    ):
-        mutation = graphql_module.ImportMutation()
-        with pytest.raises(Exception, match="Unauthorized"):
-            await mutation.import_exercise(info=mock_info, url="https://example.com/reel")
+    mutation = graphql_module.ImportMutation()
+    with pytest.raises(Exception, match="Unauthorized"):
+        await mutation.import_exercise(info=mock_info, url="https://example.com/reel")
 
     mock_session.add.assert_not_called()
     mock_session.commit.assert_not_called()

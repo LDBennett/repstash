@@ -12,6 +12,7 @@ export const GET_MY_EXERCISES: TypedDocumentNode<{
       category
       equipment
       sourceUrl
+      thumbnailUrl
       createdAt
       muscles {
         muscle
@@ -34,13 +35,14 @@ export const IMPORT_EXERCISE: TypedDocumentNode<
 `;
 
 export const GET_IMPORT_JOB: TypedDocumentNode<
-  { importJob: { id: number; status: string } },
+  { importJob: { id: number; status: string; exerciseId: number | null } },
   { id: number }
 > = gql`
   query GetImportJob($id: Int!) {
     importJob(id: $id) {
       id
       status
+      exerciseId
     }
   }
 `;
@@ -58,6 +60,7 @@ export const GET_EXERCISE: TypedDocumentNode<
       category
       equipment
       sourceUrl
+      thumbnailUrl
       steps
       muscles {
         muscle
@@ -67,10 +70,12 @@ export const GET_EXERCISE: TypedDocumentNode<
   }
 `;
 
-export const GET_ME: TypedDocumentNode<{ me: { id: number } | null }> = gql`
+export const GET_ME: TypedDocumentNode<{ me: { id: number; aiUsageCount: number; dailyAiLimit: number } | null }> = gql`
   query GetMe {
     me {
       id
+      aiUsageCount
+      dailyAiLimit
     }
   }
 `;
@@ -85,5 +90,14 @@ export const UPDATE_EXERCISE: TypedDocumentNode<
       description
       steps
     }
+  }
+`;
+
+export const DELETE_EXERCISE: TypedDocumentNode<
+  { deleteExercise: boolean },
+  { id: number }
+> = gql`
+  mutation DeleteExercise($id: Int!) {
+    deleteExercise(id: $id)
   }
 `;

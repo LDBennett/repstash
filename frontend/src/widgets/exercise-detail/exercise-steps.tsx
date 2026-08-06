@@ -28,13 +28,13 @@ export function ExerciseSteps({
               value={step}
               onChange={(e) => onStepChange(idx, e.target.value)}
               rows={2}
-              className="flex-1 bg-surface-background border border-brand-amber/30 rounded-xl p-3 text-text-primary text-sm focus:outline-none focus:border-brand-amber"
+              className="flex-1 bg-surface-background border border-brand-amber/30 rounded-xl p-3 text-text-primary text-sm focus:outline-none focus:border-brand-amber focus-visible:ring-1 focus-visible:ring-brand-amber"
             />
             <Button
-              onClick={() => onRemoveStep(idx)}
+              onClick={() => window.confirm("Are you sure you want to delete this step?") && onRemoveStep(idx)}
               variant="icon"
               size="icon"
-              className="mt-1"
+              className="mt-1 hover:text-red-400 p-3"
             >
               <X className="w-5 h-5" />
             </Button>

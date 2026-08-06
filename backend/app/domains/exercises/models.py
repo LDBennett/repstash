@@ -1,4 +1,5 @@
 import enum
+from datetime import datetime
 from typing import Optional
 from sqlalchemy import String, Integer, Float, ForeignKey, Enum
 from sqlalchemy.dialects import postgresql
@@ -66,6 +67,8 @@ class Exercise(Base):
     default_reps: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     default_weight_kg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     source_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    thumbnail_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(postgresql.TIMESTAMP(timezone=True), nullable=True)
 
     owner = relationship("User", back_populates="exercises")
     muscles = relationship("ExerciseMuscle", back_populates="exercise", cascade="all, delete-orphan")

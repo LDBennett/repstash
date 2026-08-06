@@ -6,9 +6,9 @@ import pytest
 from app.domains.exercises.ai_extractor import extract_exercises_from_content
 
 SAMPLE_JSON = (
-    '{"exercises": [{"title": "Push Up", "description": null, "category": "STRENGTH", '
-    '"equipment": null, "steps": ["Get into plank", "Lower", "Push up"], '
-    '"default_sets": null, "default_reps": null, "default_weight_kg": null, "muscles": []}]}'
+    '{"title": "Push Up", "description": null, "category": "STRENGTH", '
+    '"equipment": null, "steps": ["Step 1", "Step 2"], "default_sets": null, '
+    '"default_reps": null, "default_weight_kg": null, "muscles": []}'
 )
 
 
@@ -30,7 +30,7 @@ async def test_no_video_bytes_skips_upload_and_parses_result():
     client.files.delete.assert_not_called()
     _, kwargs = client.models.generate_content.call_args
     assert len(kwargs["contents"]) == 1
-    assert result.exercises[0].title == "Push Up"
+    assert result.title == "Push Up"
 
 
 async def test_video_bytes_uploads_and_cleans_up():

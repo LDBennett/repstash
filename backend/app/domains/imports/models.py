@@ -17,6 +17,7 @@ class ImportJob(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     source_url: Mapped[str] = mapped_column(String, index=True)
     status: Mapped[JobStatus] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
+    exercise_id: Mapped[Optional[int]] = mapped_column(ForeignKey("exercises.id", ondelete="SET NULL"), nullable=True)
 
     logs = relationship("ImportLog", back_populates="job", cascade="all, delete-orphan")
 

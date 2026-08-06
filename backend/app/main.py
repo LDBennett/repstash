@@ -12,10 +12,23 @@ from strawberry.fastapi import GraphQLRouter
 from app.api.graphql import schema
 
 from app.api.dependencies import get_current_user
+from app.core.database import get_db
 from fastapi import Request, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-async def get_graphql_context(request: Request, user = Depends(get_current_user)):
-    return {"request": request, "user": user}
+# `get_db` is declared as a dependency both here and inside `get_current_user`;
+# FastAPI resolves each `Depends(get_db)` once per request and caches the
+# result, so both ends of this graph share the same AsyncSession.
+# Note: SQLAlchemy's AsyncSession isn't safe for concurrent use from multiple
+# coroutines. A GraphQL request with several top-level fields can run them
+# concurrently — today every query/mutation this app sends has exactly one
+# top-level field, so this is fine, but keep it in mind if that changes.
+async def get_graphql_context(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+    user = Depends(get_current_user),
+):
+    return {"request": request, "user": user, "session": session}
 
 graphql_app = GraphQLRouter(schema, context_getter=get_graphql_context)
 

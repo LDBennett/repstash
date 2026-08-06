@@ -31,15 +31,13 @@ async def process_import_job(session: AsyncSession, job_id: int, source_url: str
         
         if existing_exercises:
             import_log.llm_prompt_used = "CACHED_DEDUPLICATION"
-            for orig_ex in existing_exercises:
-                # We only want to duplicate one set of exercises for a URL (in case multiple users imported it)
-                # To prevent exponential duplication, we just copy the first user's batch. 
-                # Let's filter by the first user_id we see
-                pass
-                
+            # We only want to duplicate one set of exercises for a URL (in case multiple users imported it).
+            # To prevent exponential duplication, we just copy the first user's batch. Historical URLs
+            # imported before extraction was limited to one exercise may still have several rows here;
+            # the job is pointed at the first copy.
             first_user_id = existing_exercises[0].user_id
             exercises_to_copy = [ex for ex in existing_exercises if ex.user_id == first_user_id]
-            
+
             for orig_ex in exercises_to_copy:
                 new_ex = Exercise(
                     user_id=user_id,
@@ -51,18 +49,22 @@ async def process_import_job(session: AsyncSession, job_id: int, source_url: str
                     default_sets=orig_ex.default_sets,
                     default_reps=orig_ex.default_reps,
                     default_weight_kg=orig_ex.default_weight_kg,
-                    source_url=source_url
+                    source_url=source_url,
+                    thumbnail_url=orig_ex.thumbnail_url
                 )
                 session.add(new_ex)
                 await session.flush()
-                
+
                 for orig_m in orig_ex.muscles:
                     session.add(ExerciseMuscle(
                         exercise_id=new_ex.id,
                         muscle=orig_m.muscle,
                         role=orig_m.role
                     ))
-                    
+
+                if job.exercise_id is None:
+                    job.exercise_id = new_ex.id
+
             job.status = JobStatus.COMPLETED
             import_log.status = JobStatus.COMPLETED
             await session.commit()
@@ -71,40 +73,41 @@ async def process_import_job(session: AsyncSession, job_id: int, source_url: str
         # Step 1: Scrape (If not cached)
         scrape_data = await scrape_social_url(source_url)
         import_log.raw_payload = scrape_data.caption
-        
+
         # Step 2: AI Extract
-        extraction = await extract_exercises_from_content(
-            caption=scrape_data.caption, 
-            video_bytes=scrape_data.video_bytes, 
+        ex_data = await extract_exercises_from_content(
+            caption=scrape_data.caption,
+            video_bytes=scrape_data.video_bytes,
             mime_type=scrape_data.mime_type
         )
         import_log.llm_prompt_used = "Gemini 2.5 Flash Structured Prompt"
-        
+
         # Step 3: Save to DB
-        for ex_data in extraction.exercises:
-            exercise = Exercise(
-                user_id=user_id,
-                title=ex_data.title,
-                description=ex_data.description,
-                category=ex_data.category,
-                equipment=ex_data.equipment,
-                steps=ex_data.steps,
-                default_sets=ex_data.default_sets,
-                default_reps=ex_data.default_reps,
-                default_weight_kg=ex_data.default_weight_kg,
-                source_url=source_url
+        exercise = Exercise(
+            user_id=user_id,
+            title=ex_data.title,
+            description=ex_data.description,
+            category=ex_data.category,
+            equipment=ex_data.equipment,
+            steps=ex_data.steps,
+            default_sets=ex_data.default_sets,
+            default_reps=ex_data.default_reps,
+            default_weight_kg=ex_data.default_weight_kg,
+            source_url=source_url,
+            thumbnail_url=scrape_data.thumbnail_url
+        )
+        session.add(exercise)
+        await session.flush() # get exercise.id
+
+        for m in ex_data.muscles:
+            em = ExerciseMuscle(
+                exercise_id=exercise.id,
+                muscle=m.muscle,
+                role=m.role
             )
-            session.add(exercise)
-            await session.flush() # get exercise.id
-            
-            for m in ex_data.muscles:
-                em = ExerciseMuscle(
-                    exercise_id=exercise.id,
-                    muscle=m.muscle,
-                    role=m.role
-                )
-                session.add(em)
-                
+            session.add(em)
+
+        job.exercise_id = exercise.id
         job.status = JobStatus.COMPLETED
         import_log.status = JobStatus.COMPLETED
         await session.commit()

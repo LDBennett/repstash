@@ -18,9 +18,6 @@ class ExerciseExtraction(BaseModel):
     default_weight_kg: Optional[float] = Field(None, description="Suggested default weight in kilograms (kg)")
     muscles: List[MuscleTarget] = Field(default_factory=list, description="Target muscles for the exercise")
 
-class ExtractionResult(BaseModel):
-    exercises: List[ExerciseExtraction] = Field(description="List of exercises extracted from the video or post")
-
 class ExerciseMuscleRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,4 +40,5 @@ class ExerciseRead(BaseModel):
     default_reps: Optional[int] = None
     default_weight_kg: Optional[float] = None
     source_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
     muscles: List[ExerciseMuscleRead] = Field(default_factory=list)

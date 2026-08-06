@@ -24,7 +24,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   secondary: "bg-surface-border text-text-primary hover:bg-surface-border/80 font-bold",
   outline: "border border-surface-border bg-surface-background text-text-primary hover:border-brand-amber hover:text-brand-amber font-semibold",
   ghost: "text-brand-amber font-bold hover:underline",
-  icon: "text-text-muted hover:text-red-400",
+  icon: "text-text-muted hover:text-brand-amber",
   success: "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 font-bold",
   danger: "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 font-bold",
 };
@@ -54,8 +54,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // Determine if we need to apply flex center
     const isIconVariant = variant === "icon";
     const baseStyle = isIconVariant
-      ? "inline-flex items-center justify-center transition-colors focus:outline-none"
-      : "inline-flex items-center justify-center gap-2 transition-colors focus:outline-none";
+      ? "inline-flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber focus-visible:ring-offset-2 focus-visible:ring-offset-surface-background"
+      : "inline-flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber focus-visible:ring-offset-2 focus-visible:ring-offset-surface-background";
 
     const widthStyle = fullWidth ? "w-full rounded-xl" : "";
     const disabledStyle = disabled ? "opacity-50 cursor-not-allowed" : "";

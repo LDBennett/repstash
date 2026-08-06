@@ -13,22 +13,8 @@ import app.domains.workouts.models  # noqa: F401
 from app.domains.exercises.models import ExerciseCategory, MuscleName, MuscleRole
 from app.domains.exercises.schemas import (
     ExerciseExtraction,
-    ExtractionResult,
     MuscleTarget,
 )
-
-
-class FakeAsyncSessionCM:
-    """Stands in for `async with AsyncSessionLocal() as session: ...`."""
-
-    def __init__(self, session):
-        self._session = session
-
-    async def __aenter__(self):
-        return self._session
-
-    async def __aexit__(self, *exc_info):
-        return False
 
 
 def make_mock_session() -> AsyncMock:
@@ -42,26 +28,37 @@ def make_mock_session() -> AsyncMock:
     session.rollback = AsyncMock()
     session.refresh = AsyncMock()
     session.flush = AsyncMock()
+    # On this mock library version, AsyncMock(spec=AsyncSession).execute's
+    # return value is itself an AsyncMock (recursively, for every attribute
+    # accessed on it), so unawaited chains like `.scalars().first()` silently
+    # hand back coroutines instead of values. Pin it to a synchronous,
+    # "empty result" MagicMock by default so `Result`-style chaining
+    # (.scalars().first(), .scalars().unique().all(), .scalar_one_or_none())
+    # behaves like a real, empty SQLAlchemy Result — individual tests
+    # override `session.execute.return_value`/`.side_effect` as needed.
+    empty_scalars = MagicMock()
+    empty_scalars.all.return_value = []
+    empty_scalars.first.return_value = None
+    empty_scalars.unique.return_value = empty_scalars
+    empty_result = MagicMock()
+    empty_result.scalars.return_value = empty_scalars
+    empty_result.scalar_one_or_none.return_value = None
+    session.execute = AsyncMock(return_value=empty_result)
     return session
 
 
-def make_sample_extraction() -> ExtractionResult:
-    """One exercise with one muscle target, matching what Gemini's structured
-    output is expected to look like."""
-    return ExtractionResult(
-        exercises=[
-            ExerciseExtraction(
-                title="Barbell Squat",
-                description="A compound lower-body strength exercise.",
-                category=ExerciseCategory.STRENGTH,
-                equipment="Barbell",
-                steps=["Set the bar on your back", "Squat down", "Stand back up"],
-                default_sets=3,
-                default_reps=10,
-                default_weight_kg=60.0,
-                muscles=[MuscleTarget(muscle=MuscleName.QUADRICEPS, role=MuscleRole.PRIMARY)],
-            )
-        ]
+def make_sample_extraction() -> ExerciseExtraction:
+    """The single exercise Gemini's structured output is expected to produce."""
+    return ExerciseExtraction(
+        title="Barbell Squat",
+        description="A compound lower-body strength exercise.",
+        category=ExerciseCategory.STRENGTH,
+        equipment="BARBELL",
+        steps=["Set the bar on your back", "Squat down", "Stand back up"],
+        default_sets=3,
+        default_reps=10,
+        default_weight_kg=60.0,
+        muscles=[MuscleTarget(muscle=MuscleName.QUADRICEPS, role=MuscleRole.PRIMARY)],
     )
 
 
@@ -71,5 +68,5 @@ def mock_session() -> AsyncMock:
 
 
 @pytest.fixture
-def sample_extraction() -> ExtractionResult:
+def sample_extraction() -> ExerciseExtraction:
     return make_sample_extraction()

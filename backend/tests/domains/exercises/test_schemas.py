@@ -9,7 +9,6 @@ from app.domains.exercises.schemas import (
     ExerciseExtraction,
     ExerciseMuscleRead,
     ExerciseRead,
-    ExtractionResult,
     MuscleTarget,
 )
 
@@ -48,18 +47,14 @@ def test_invalid_category_raises_validation_error():
 
 
 def test_extraction_result_round_trips_through_json():
-    original = ExtractionResult(
-        exercises=[
-            ExerciseExtraction(
-                title="Barbell Squat",
-                category=ExerciseCategory.STRENGTH,
-                steps=["Set up", "Squat", "Stand"],
-                muscles=[MuscleTarget(muscle=MuscleName.QUADRICEPS, role=MuscleRole.PRIMARY)],
-            )
-        ]
+    original = ExerciseExtraction(
+        title="Barbell Squat",
+        category=ExerciseCategory.STRENGTH,
+        steps=["Set up", "Squat", "Stand"],
+        muscles=[MuscleTarget(muscle=MuscleName.QUADRICEPS, role=MuscleRole.PRIMARY)],
     )
 
-    round_tripped = ExtractionResult.model_validate_json(original.model_dump_json())
+    round_tripped = ExerciseExtraction.model_validate_json(original.model_dump_json())
 
     assert round_tripped == original
 

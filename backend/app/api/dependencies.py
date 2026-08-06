@@ -1,13 +1,15 @@
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Depends
 from clerk_backend_api import AuthenticateRequestOptions, Clerk
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal
+from app.core.database import get_db
 from app.domains.users.models import User
 from sqlalchemy import select
 
 clerk_client = Clerk(bearer_auth=settings.CLERK_SECRET_KEY)
 
-async def get_current_user(request: Request):
+async def get_current_user(request: Request, session: AsyncSession = Depends(get_db)):
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return None # Unauthenticated but allows public queries
@@ -15,7 +17,7 @@ async def get_current_user(request: Request):
     try:
         # Verify the session token using Clerk SDK
         request_state = clerk_client.authenticate_request(
-            request, 
+            request,
             AuthenticateRequestOptions()
         )
         if not request_state.is_signed_in or not request_state.payload:
@@ -24,20 +26,25 @@ async def get_current_user(request: Request):
         clerk_id = request_state.payload.get("sub")
 
         # Provision or fetch user
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(select(User).where(User.clerk_id == clerk_id))
-            user = result.scalar_one_or_none()
+        result = await session.execute(select(User).where(User.clerk_id == clerk_id))
+        user = result.scalar_one_or_none()
 
-            if not user:
-                # Auto-provision user on first authenticated request
-                email = request_state.payload.get("email", f"{clerk_id}@placeholder.com")
-                user = User(clerk_id=clerk_id, email=email)
-                session.add(user)
+        if not user:
+            # Auto-provision user on first authenticated request
+            email = request_state.payload.get("email", f"{clerk_id}@placeholder.com")
+            user = User(clerk_id=clerk_id, email=email)
+            session.add(user)
+            try:
                 await session.commit()
                 await session.refresh(user)
-                
-            return user
-            
+            except IntegrityError:
+                # Lost a race with a concurrent first request for the same clerk_id.
+                await session.rollback()
+                result = await session.execute(select(User).where(User.clerk_id == clerk_id))
+                user = result.scalar_one_or_none()
+
+        return user
+
     except HTTPException:
         raise
     except Exception as e:

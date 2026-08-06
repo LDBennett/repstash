@@ -10,6 +10,7 @@ export interface ExerciseItem {
   category: string | null;
   equipment: string | null;
   sourceUrl: string;
+  thumbnailUrl: string | null;
   createdAt: string;
   muscles: ExerciseMuscle[];
 }

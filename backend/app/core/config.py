@@ -29,7 +29,13 @@ class Settings(BaseSettings):
     
     # Gemini
     GEMINI_API_KEY: str = ""
-    
+    DAILY_AI_IMPORT_LIMIT: int = 10
+
+    # Video scraping
+    MAX_VIDEO_DOWNLOAD_BYTES: int = 40 * 1024 * 1024
+    MAX_VIDEO_DURATION_SECONDS: int = 240
+    VIDEO_DOWNLOAD_TIMEOUT_SECONDS: float = 20.0
+
     model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
 
 settings = Settings()

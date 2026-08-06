@@ -2,24 +2,29 @@ from google import genai
 from google.genai import types
 from io import BytesIO
 from app.core.config import settings
-from app.domains.exercises.schemas import ExtractionResult
+from app.domains.exercises.schemas import ExerciseExtraction
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 async def extract_exercises_from_content(
-    caption: str, 
-    video_bytes: BytesIO | None = None, 
+    caption: str,
+    video_bytes: BytesIO | None = None,
     mime_type: str = "video/mp4"
-) -> ExtractionResult:
+) -> ExerciseExtraction:
     """
-    Uses Gemini 2.5 Flash to extract structured exercise data from a caption and optional video stream.
+    Uses Gemini 2.5 Flash to extract a single structured exercise from a caption and optional video stream.
     """
-    
+
     prompt = f"""
-    You are an expert fitness AI. Your job is to extract a list of exercises from the provided social media caption and video (if available).
-    For each exercise, extract the title, description, category, equipment, steps, default sets/reps/weight (in kg), and target muscles.
-    Ensure strict adherence to the schema.
-    
+    You are an expert fitness AI. Your job is to extract exactly one exercise from the provided social media
+    caption and video (if available). If the content shows multiple exercises (e.g. a circuit or superset),
+    extract only the first/primary one demonstrated.
+
+    IMPORTANT GUIDELINES:
+    1. For the `title`, heavily prefer the exact name of the exercise explicitly mentioned in the caption (e.g., if the caption says "Cable Romanian Deadlifts", use that instead of a generic visual description like "Cable Pull-through").
+    2. Extract the description, category, equipment, steps, default sets/reps/weight (in kg), and target muscles based on both the video and the caption.
+    3. Ensure strict adherence to the schema.
+
     Caption context:
     {caption}
     """
@@ -43,13 +48,13 @@ async def extract_exercises_from_content(
             contents=contents,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=ExtractionResult,
+                response_schema=ExerciseExtraction,
                 temperature=0.2,
             ),
         )
         if not response.text:
             raise ValueError("Gemini returned an empty response")
-        return ExtractionResult.model_validate_json(response.text)
+        return ExerciseExtraction.model_validate_json(response.text)
     finally:
         # Cleanup ephemeral file from Google's servers
         if uploaded_file and uploaded_file.name:
